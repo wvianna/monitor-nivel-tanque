@@ -1,0 +1,9 @@
+Monitor de nível de tanque com Arduino Uno, sensor HC-SR04 (Trig:D9, Echo:D10) e display OLED MC01506 1.5" I2C (SDA:A4, SCL:A5, endereço 0x3C confirmado).
+
+O sistema deve:
+- Ler distância com HC-SR04 (média de 5 leituras)
+- Converter para nível percentual e cm
+- Exibir no display: % nível, cm, distância, status (CRITICO/BAIXO/MEDIO/ALTO)
+- Barra visual de nível na lateral
+- Enviar dados via Serial a 115200 baud
+- Atualizar a cada 500ms
