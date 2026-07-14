@@ -434,13 +434,6 @@ void setup() {
   Wire.setClock(100000);
   if(!display.begin(SCREEN_ADDRESS, true)) {
     Serial.println("FALHA display");
-  } else {
-    display.clearDisplay();
-    display.setTextSize(1); display.setTextColor(SH110X_WHITE);
-    display.setCursor(0, 0); display.println("AP Mode");
-    display.setCursor(0, 16); display.println("192.168.4.1");
-    display.setCursor(0, 32); display.println("Conecte-se!");
-    display.display();
   }
 
   // WiFi AP
@@ -455,11 +448,43 @@ void setup() {
   server.begin();
   Serial.println("Server started!");
 
-  display.clearDisplay();
-  display.setCursor(0, 0); display.println("WiFi: Monitor-Nivel");
-  display.setCursor(0, 16); display.println("Senha: 12345678");
-  display.setCursor(0, 40); display.println("IP: 192.168.4.1");
-  display.display();
+  // Boot screen: info + progress bar (5 seconds, 50 frames)
+  const int BOOT_MS = 5000;
+  const int STEPS = 50;
+  for (int i = 0; i <= STEPS; i++) {
+    int progress = i * 100 / STEPS;
+    int elapsed = i * BOOT_MS / STEPS;
+    display.clearDisplay();
+    display.setTextSize(1); display.setTextColor(SH110X_WHITE);
+
+    // Title
+    display.setCursor(0, 0); display.println("MONITOR DE NIVEL");
+    display.drawLine(0, 10, 128, 10, SH110X_WHITE);
+
+    // WiFi info
+    display.setCursor(0, 16); display.println("Rede: Monitor-Nivel");
+    display.setCursor(0, 28); display.println("Senha: 12345678");
+    display.setCursor(0, 40); display.print("IP: ");
+    display.println(WiFi.softAPIP());
+
+    // Web server status
+    display.setCursor(0, 54); display.println("Web: 192.168.4.1");
+
+    // Progress bar
+    display.drawRect(8, 72, 112, 12, SH110X_WHITE);
+    int bw = map(progress, 0, 100, 0, 108);
+    if (bw > 0) display.fillRect(10, 74, bw, 8, SH110X_WHITE);
+
+    // Progress text
+    char buf[16];
+    snprintf(buf, sizeof(buf), "%d%%", progress);
+    display.setTextSize(1);
+    display.setCursor(56, 90); display.println(buf);
+
+    display.display();
+    delay(BOOT_MS / STEPS);
+    server.handleClient();
+  }
 
   for (int i = 0; i < HISTORY_SIZE; i++) history[i] = 0;
 
