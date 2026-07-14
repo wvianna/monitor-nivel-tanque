@@ -10,22 +10,44 @@ float dist = 0, pct = 0, nvl = 0;
 unsigned long last = 0;
 
 float ler() {
-    digitalWrite(TRIG_PIN, LOW); delayMicroseconds(2);
-    digitalWrite(TRIG_PIN, HIGH); delayMicroseconds(10);
+    // Garante nivel logico baixo antes do pulso
     digitalWrite(TRIG_PIN, LOW);
-    long d = pulseIn(ECHO_PIN, HIGH, TIMEOUT_SENSOR);
-    float r = d * SOUND_SPEED / 2;
-    return (r == 0 || r > MAX_DISTANCE) ? -1 : r;
+    delayMicroseconds(5);
+    // Pulso de trigger de 10us
+    digitalWrite(TRIG_PIN, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(TRIG_PIN, LOW);
+    // pulseInLong eh mais preciso no ESP8266 (evita interferencia de IRQ)
+    long d = pulseInLong(ECHO_PIN, HIGH, TIMEOUT_SENSOR);
+    if (d == 0) return -1;
+    float r = d * SOUND_SPEED / 2.0;
+    return (r > MAX_DISTANCE) ? -1 : r;
 }
 
 float media() {
-    float s = 0; int v = 0;
+    // Coleta amostras e rejeita outliers (descarta maior e menor)
+    float amostras[NUM_LEITURAS];
+    int n = 0;
     for (int i = 0; i < NUM_LEITURAS; i++) {
         float r = ler();
-        if (r > 0) { s += r; v++; }
+        if (r > 0) amostras[n++] = r;
         delay(INTERVALO_LEITURA);
     }
-    return v > 0 ? s / v : -1;
+    if (n < 2) return (n == 1) ? amostras[0] : -1;
+    // Ordena para encontrar mediana
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = i + 1; j < n; j++) {
+            if (amostras[i] > amostras[j]) {
+                float t = amostras[i]; amostras[i] = amostras[j]; amostras[j] = t;
+            }
+        }
+    }
+    // Se tem 3+, descarta maior e menor (outliers)
+    int inicio = (n > 2) ? 1 : 0;
+    int fim = (n > 2) ? n - 1 : n;
+    float soma = 0;
+    for (int i = inicio; i < fim; i++) soma += amostras[i];
+    return soma / (fim - inicio);
 }
 
 const char* sts(float p) {

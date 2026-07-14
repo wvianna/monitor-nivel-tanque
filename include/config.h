@@ -3,7 +3,7 @@
  * @brief Configurações do sistema de monitoramento de nível
  * 
  * Define os pinos, parâmetros do tanque e configurações do display
- * Display: MC01506 1.5" OLED (SSD1306, 128x64, I2C 0x3C)
+ * Display: MC01506 1.5" SH1107 128x128 I2C 0x3C - NodeMCU ESP8266
  */
 
 #ifndef CONFIG_H
