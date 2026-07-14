@@ -1,104 +1,181 @@
-# 📊 Monitor de Nível de Tanque
+# Monitor de Nível de Tanque
 
-Sistema completo de monitoramento de nível de líquido em tanques usando Arduino Uno, sensor ultrassônico HC-SR04 e display OLED MC01506 1.5".
+Sistema de monitoramento de nível de líquido em tanques usando **NodeMCU ESP8266**, sensor ultrassônico HC-SR04 e display OLED **SH1107 128×128** (modelo MC01506 1.5").
 
-## Caracteristicas
+## Características
 
-- Leitura precisa de distancia com sensor HC-SR04
-- Conversao automatica de distancia para nivel percentual
-- Display OLED MC01506 1.5" com interface grafica
-- Barra visual de nivel em tempo real
-- Sistema de alertas (Critico, Baixo, Medio, Alto)
+- Leitura precisa de distância com sensor HC-SR04
+- Conversão automática de distância para nível percentual
+- Display OLED SH1107 128×128 com interface gráfica
+- Barra visual de nível em tempo real
+- Sistema de alertas (Crítico, Baixo, Médio, Alto)
 - Monitoramento via Serial Monitor (115200 baud)
-- Media de multiplas leituras para maior precisao
-- Endereco I2C do display confirmado: **0x3C**
+- Média de múltiplas leituras para maior precisão
 
-## Hardware Necessario
+## Hardware Necessário
 
-| Componente | Especificacao |
+| Componente | Especificação |
 |------------|---------------|
-| Microcontrolador | Arduino Uno (porta /dev/ttyUSB0) |
-| Sensor Ultrassonico | HC-SR04 |
-| Display | OLED MC01506 1.5" I2C (128x64) |
-| Cabos | Jumpers macho-macho e macho-femea |
+| **Microcontrolador** | NodeMCU ESP8266 |
+| **Sensor Ultrassônico** | HC-SR04 |
+| **Display OLED** | MC01506 1.5" SH1107 128×128 I2C |
+| **Cabos** | Jumpers macho-fêmea |
 
-## Diagrama de Conexoes
+## Diagrama de Conexões
 
-### Sensor HC-SR04
+```mermaid
+graph LR
+    subgraph NodeMCU ESP8266
+        D5[GPIO14 D5]
+        D6[GPIO12 D6]
+        D2[GPIO4 D2 SDA]
+        D1[GPIO5 D1 SCL]
+        VU[3.3V]
+        GN[GND]
+    end
 
+    subgraph HC-SR04
+        TRG[Trigger]
+        ECH[Echo]
+        VCC1[VCC]
+        GND1[GND]
+    end
+
+    subgraph SH1107_OLED
+        SDA[SDA]
+        SCL[SCL]
+        VCC2[VCC]
+        GND2[GND]
+    end
+
+    D5 --> TRG
+    D6 --> ECH
+    VU --> VCC1
+    GN --> GND1
+
+    D2 --> SDA
+    D1 --> SCL
+    VU --> VCC2
+    GN --> GND2
 ```
-HC-SR04          Arduino Uno
---------         -----------
-VCC             5V
-TRIG            Pino 9 (Digital)
-ECHO            Pino 10 (Digital)
-GND             GND
+
+### Tabela de Pinos
+
+| Componente | Pino Display | Pino NodeMCU | GPIO |
+|-----------|-------------|-------------|------|
+| **HC-SR04 Trigger** | Trigger | **D5** | GPIO14 |
+| **HC-SR04 Echo** | Echo | **D6** | GPIO12 |
+| **Display SDA** | SDA | **D2** | GPIO4  |
+| **Display SCL** | SCL | **D1** | GPIO5  |
+| **Alimentação** | VCC | 3.3V | - |
+| **GND** | GND | GND | - |
+
+## Instalação
+
+### 1. Configurar PlatformIO
+
+```ini
+[env:nodemcuv2]
+platform = espressif8266
+board = nodemcuv2
+framework = arduino
+monitor_speed = 115200
+
+lib_deps =
+    adafruit/Adafruit SH110X @ ^2.1.11
+    adafruit/Adafruit GFX Library @ ^1.11.9
 ```
 
-### Display OLED MC01506 (I2C)
-
-```
-Display OLED     Arduino Uno
-------------     -----------
-VCC             5V ou 3.3V
-GND             GND
-SDA             A4 (Analogico 4)
-SCL             A5 (Analogico 5)
-```
-
-## Instalacao
-
-### Compilar e fazer upload
+### 2. Compilar e fazer upload
 
 ```bash
 pio run --target upload
 ```
 
-### Monitor serial
+### 3. Monitor serial
 
 ```bash
 pio device monitor -p /dev/ttyUSB0 -b 115200
 ```
 
-## Configuracao (include/config.h)
-
-### Parametros do Tanque
+## Configuração (`include/config.h`)
 
 ```cpp
-#define ALTURA_TANQUE 200       // Altura total do tanque (cm)
-#define DISTANCIA_SENSOR 10     // Distancia sensor ate nivel maximo (cm)
+// HC-SR04
+#define TRIG_PIN 14      // GPIO14 = D5
+#define ECHO_PIN 12      // GPIO12 = D6
+
+// Display SH1107
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 128
+#define OLED_RESET -1
+#define SCREEN_ADDRESS 0x3C
+#define PIN_SDA 4        // GPIO4 = D2
+#define PIN_SCL 5        // GPIO5 = D1
+
+// Tanque
+#define ALTURA_TANQUE 200
+#define DISTANCIA_SENSOR 10
+
+// Leituras
+#define NUM_LEITURAS 5
+#define INTERVALO_LEITURA 100
+#define TIMEOUT_SENSOR 30000
+#define INTERVALO_ATUALIZACAO 500
+
+// Alertas
+#define NIVEL_CRITICO 10
+#define NIVEL_BAIXO 25
+#define NIVEL_MEDIO 50
+#define NIVEL_ALTO 75
 ```
 
-### Niveis de Alerta
+## Detalhes Técnicos
+
+### Driver do Display SH1107
+
+O display MC01506 1.5" utiliza o driver **SH1107** com resolução **128×128**. O construtor da biblioteca Adafruit SH110X **requer os parâmetros (HEIGHT, WIDTH) nesta ordem específica**:
 
 ```cpp
-#define NIVEL_CRITICO 10        // < 10%
-#define NIVEL_BAIXO 25          // 10-25%
-#define NIVEL_MEDIO 50          // 25-50%
-#define NIVEL_ALTO 75           // > 75%
+Adafruit_SH1107 display = Adafruit_SH1107(SCREEN_HEIGHT, SCREEN_WIDTH, &Wire, OLED_RESET);
+//                                          ^^^^           ^^^
+//                                          ALTURA primeiro, depois LARGURA
 ```
 
-### Display (ja configurado)
+### I2C
 
-```cpp
-#define SCREEN_ADDRESS 0x3C     // Confirmado via scanner I2C
+- **Endereço**: `0x3C` (confirmado via scanner)
+- **Clock**: 100 kHz (reduzido de 400 kHz para maior estabilidade no ESP8266)
+- **Pinos**: SDA = GPIO4 (D2), SCL = GPIO5 (D1)
+
+### Tratamento de Erros
+
+- Falha de inicialização do display → loop infinito com mensagem serial
+- Leitura inválida do sensor → ignorada, mantém último valor válido
+- Média de 5 leituras para filtrar ruído do HC-SR04
+
+## Saída Serial
+
+```
+Monitor Tanque v6.0 - SH1107 OK!
+Display OK!
+Pronto!
+
+Dist: 102.12 | Nivel: 107.88 (54%)
+Dist: 23.38 | Nivel: 186.62 (93%)
 ```
 
 ## Interface do Display
 
 ```
-+-------------------------+
-| MONITOR DE NIVEL        |
-+-------------------------+
-| 87.5%              #### |
-|                    #### |
-| Nivel: 175.0 cm    #### |
-| Dist: 35.0 cm      #### |
-| Status: ALTO       #### |
-+-------------------------+
+┌─────────────────────────────┐
+│ MONITOR DE NIVEL            │
+├─────────────────────────────┤
+│ 87%                    ████ │
+│                        ████ │
+│                        ████ │
+│ Nivel: 175.0 cm        ████ │
+│ Dist: 35.0 cm          ████ │
+│ Status: ALTO           ████ │
+└─────────────────────────────┘
 ```
-
-## Notas
-
-- Display MC01506 1.5" usa driver SSD1306, I2C endereco **0x3C**
-- O sensor HC-SR04 deve ser instalado no topo do tanque, apontando para baixo
