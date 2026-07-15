@@ -130,6 +130,67 @@ pio device monitor -p /dev/ttyUSB0 -b 115200
 #define NIVEL_ALTO 75
 ```
 
+## Painel Web (Modo AP)
+
+O ESP8266 cria uma rede Wi-Fi própria (Access Point) com um painel de monitoramento web.
+
+### Acesso
+
+| Item | Valor |
+|------|-------|
+| **Rede Wi-Fi** | `Monitor-Nivel` |
+| **Senha** | `12345678` |
+| **URL do painel** | `http://192.168.4.1` |
+| **Tipo** | Access Point (DHCP para clientes) |
+
+### Como Conectar
+
+1. No celular ou notebook, conecte-se à rede Wi-Fi **`Monitor-Nivel`** (senha: `12345678`)
+2. Abra o navegador e acesse **`http://192.168.4.1`**
+3. O painel web mostrará automaticamente:
+
+```
+┌──────────────────────────────────┐
+│        MONITOR DE NÍVEL          │
+│        ──── ∙ ────               │
+│                                  │
+│          ╭──────────╮            │
+│          │  ╭────╮  │  ← Gauge   │
+│          │  │ 87%│  │    animado  │
+│          │  ╰────╯  │            │
+│          ╰──────────╯            │
+│                                  │
+│   ┌──────────┐ ┌──────────┐      │
+│   │ Nível    │ │ Distância│      │
+│   │ 175.0 cm │ │ 35.0 cm  │      │
+│   └──────────┘ └──────────┘      │
+│                                  │
+│   ┌──────────────────────────┐   │
+│   │ Histórico                │   │
+│   │   ╱╲    ╱╲               │   │
+│   │  ╱  ╲  ╱  ╲              │   │
+│   │ ╱    ╲╱    ╲             │   │
+│   └──────────────────────────┘   │
+└──────────────────────────────────┘
+```
+
+### Funcionalidades do Painel
+
+- **Gauge**: arco gradiente com animação suave do percentual
+- **Status**: badge colorido (verde = OK, amarelo = baixo, vermelho = crítico)
+- **Cards**: nível em centímetros e distância do sensor
+- **Gráfico**: histórico das últimas 60 leituras em tempo real
+- **Auto-update**: dados atualizados a cada 1,5 segundos via AJAX
+
+### Tela de Inicialização
+
+Durante o boot, o display OLED mostra uma tela de boas-vindas com:
+- Nome da rede e senha
+- IP do servidor web (`192.168.4.1`)
+- Barra de progresso animada (5 segundos)
+
+Após a inicialização, o display entra no modo de monitoramento normal.
+
 ## Detalhes Técnicos
 
 ### Driver do Display SH1107
